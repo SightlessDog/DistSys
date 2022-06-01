@@ -1,4 +1,4 @@
-package vt.second;
+package second.a;
 
 public class Main {
 

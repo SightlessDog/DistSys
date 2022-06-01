@@ -1,4 +1,4 @@
-package vt.second;
+package second.a;
 
 import java.io.BufferedReader;
 import java.io.IOException;
