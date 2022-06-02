@@ -77,7 +77,8 @@ public class HttpSwitchRequestHandler implements HttpHandler {
             // ASCII representation. Send the exchange's response headers using code 307 (temporary redirect)
             // and zero as reponse length. Note that the schema of the redirect URI will usually be null,
             // which works fine.
-            final URI redirectURI = URI.create(redirectServerAddress.getHostName());
+            System.out.println(redirectServerAddress.getHostName());
+            final URI redirectURI = URI.create("http://localhost:" + redirectServerAddress.getPort() + "/external/HelloWorld.html");
             final URI requestURI = exchange.getRequestURI();
 
             exchange.getResponseHeaders().set("Location", redirectURI.toASCIIString());

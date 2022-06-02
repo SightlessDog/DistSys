@@ -89,8 +89,8 @@ public class TcpSwitchConnectionHandler implements Runnable {
                 e.printStackTrace();
             }
         } else {
-            int serverIndex = Math.abs(new Random(clientConnection.getInetAddress().hashCode()).nextInt() % 2);
-            getFile(serverIndex);
+            int random = Math.abs(new Random(clientConnection.getInetAddress().hashCode()).nextInt() % 2);
+            getFile(random);
         }
     }
 }
