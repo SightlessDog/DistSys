@@ -78,7 +78,7 @@ public class HttpSwitchRequestHandler implements HttpHandler {
             // and zero as reponse length. Note that the schema of the redirect URI will usually be null,
             // which works fine.
             System.out.println(redirectServerAddress.getHostName());
-            final URI redirectURI = URI.create(redirectServerAddress.getHostName() + redirectServerAddress.getPort() + "/external/HelloWorld.html");
+            final URI redirectURI = URI.create("http://" + redirectServerAddress.getHostName() + ":" + redirectServerAddress.getPort() + "/external/HelloWorld.html");
             final URI requestURI = exchange.getRequestURI();
 
             exchange.getResponseHeaders().set("Location", redirectURI.toASCIIString());
