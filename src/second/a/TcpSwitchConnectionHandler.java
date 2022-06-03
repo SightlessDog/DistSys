@@ -76,11 +76,30 @@ public class TcpSwitchConnectionHandler implements Runnable {
         // create the same pseudo-random number (serverIndex) as next value. If you can't
         // realize this solution, using a cache in the form of clientAddress->serverSocketAddress
         // mappings is probably the next best alternative ...
+
+        // Switch Server -> client
+        try (Socket clientConnection = this.clientConnection) {
+            // Switch Server -> server
+            //try (Socket serverConnection = this.newServerConnection()) {
+              // 2 threads (futures) client and server, for the InputStream.transferTo()
+              // Using futures, example: ResyncThreadByFutureInterruptibly
+            //}
+            // new Socket(host,port) muss in newServerConnection ausgerufen werden
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // comes under the method newServerConnection
         if (!parent.getSessionAware()) {
+            // TODO recursion oder Schleif
+
             int random = Math.abs(ThreadLocalRandom.current().nextInt() % 2);
             try {
-                URL url = new URL("http://localhost:" + parent.redirectServerAddresses[random].getPort());
-                HttpURLConnection huc = (HttpURLConnection) url.openConnection();
+                final URL url = new URL("http://:" + parent.redirectServerAddresses[random].getHostName() +
+                        ":" + parent.redirectServerAddresses[random].getPort());
+
+                final HttpURLConnection huc = (HttpURLConnection) url.openConnection();
+
                 if (huc.getResponseCode() != HttpURLConnection.HTTP_OK ) {
                     random = (random + 1) % 2;
                 }
