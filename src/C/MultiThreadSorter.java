@@ -1,10 +1,15 @@
 package C;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.Objects;
+import java.util.Queue;
 
+import com.sun.source.tree.IfTree;
 import edu.sb.ds.sort.MergeSorter;
+import edu.sb.ds.sort.SingleThreadSorter;
 import edu.sb.ds.util.Copyright;
 
 /**
@@ -135,12 +140,25 @@ public class MultiThreadSorter<E extends Comparable<E>> implements MergeSorter<E
      * @return the root sorter created
      */
     static public <T extends Comparable<T>> MergeSorter<T> newInstance () {
-        //TODO Create a queue containing as many single-thread sorter instances as there are
-        // processors within this system - which will be at least one. While there is more than
-        // one sorter within said queue, remove two of them, use these to create a new multi-thread
-        // sorter instance, and add the latter to the queue - make sure this follows first in
-        // first out semantics. This way, the queue is guaranteed to contain exactly one element
-        // in the end, which shall be returned.
-        return null;
+        Queue<MergeSorter> sorterQ = new LinkedList<MergeSorter>();
+
+        for (int i=0; i<Runtime.getRuntime().availableProcessors(); i++) {
+            sorterQ.add(SingleThreadSorter.newInstance());
+        }
+
+        if (sorterQ.size()>1) {
+            final MergeSorter s1 = sorterQ.remove();
+            final MergeSorter s2 = sorterQ.remove();
+
+            sorterQ.add(new MultiThreadSorter<>(s1,s2));
+        }
+
+        // Create a queue containing as many single-thread sorter instances as there are
+        // processors within this system - which will be at least one.
+        // While there is more than one sorter within said queue, remove two of them,
+        // use these to create a new multi-thread sorter instance, and add the latter to the queue -
+        // make sure this follows first in first out semantics.
+        // This way, the queue is guaranteed to contain exactly one element in the end, which shall be returned.
+        return sorterQ.remove();
     }
 }
