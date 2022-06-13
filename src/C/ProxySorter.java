@@ -75,7 +75,7 @@ public class ProxySorter implements MergeSorter<String> {
     public void write (final String element) throws IllegalStateException, IOException {
         if (this.state != State.WRITE) throw new IllegalStateException(this.state.name());
 
-        // TODO: If the given element is null, write newline characters to the char sink, flush
+        //TODO: If the given element is null, write newline characters to the char sink, flush
         // the latter, and set the state to SORT. Otherwise, write the given element to the
         // char sink, write newline characters to the latter, and do NOT flush it.
     }
@@ -97,7 +97,7 @@ public class ProxySorter implements MergeSorter<String> {
     public String read () throws IllegalStateException, IOException {
         if (this.state != State.READ) throw new IllegalStateException(this.state.name());
 
-        // TODO: Read the next line from the char source. Return said line if it is
+        //TODO: Read the next line from the char source. Return said line if it is
         // neither null nor empty. Otherwise, set the state to WRITE and return null.
         return null;
     }
@@ -126,7 +126,7 @@ public class ProxySorter implements MergeSorter<String> {
     static public MergeSorter<String> newInstance (final InetSocketAddress... serviceAddresses) throws NullPointerException, IllegalArgumentException, IOException {
         if (serviceAddresses.length == 0) throw new IllegalArgumentException();
 
-        // TODO Create a queue containing one proxy sorter instance for each of the given service
+        //TODO Create a queue containing one proxy sorter instance for each of the given service
         // addresses - which will be at least one. While there is more than one sorter within said
         // queue, remove two of them, use these to create a new multi-thread sorter instance, and
         // add the latter to the queue - make sure this follows fist in first out semantics. This

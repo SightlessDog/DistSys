@@ -92,7 +92,7 @@ public final class SortServer implements Runnable, AutoCloseable {
         if (connection == null) throw new NullPointerException();
 
         return () -> {
-            // TODO: Create a new sorter instance using MultiThreadSorterSkeleton.newInstance(), and a
+            //TODO: Create a new sorter instance using MultiThreadSorterSkeleton.newInstance(), and a
             // buffered reader and writer pair based on UTF-8 and a 60 KiB buffer size; note that this
             // size is chosen so that the TCP/IP headers and some multi-byte UTF-8 characters can be
             // added to a buffer content without frequently exceeding the maximum TCP/IPv4 packet sizes,
