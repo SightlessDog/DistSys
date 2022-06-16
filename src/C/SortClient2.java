@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import edu.sb.ds.sort.MergeSorter;
-import edu.sb.ds.sort.SingleThreadSorter;
 import edu.sb.ds.sort.SortClient;
 import edu.sb.ds.util.Copyright;
 
@@ -43,7 +42,7 @@ public final class SortClient2 extends SortClient {
         final Path sinkPath = Paths.get(args[1]);
 
         final MergeSorter<String> sorter = MultiThreadSorter.newInstance();
-        final edu.sb.ds.sort.SortClient1 client = new edu.sb.ds.sort.SortClient1(sourcePath, sinkPath, sorter);
+        final SortClient2 client = new SortClient2(sourcePath, sinkPath, sorter);
         client.process();
     }
 }

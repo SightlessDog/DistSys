@@ -27,7 +27,6 @@ import edu.sb.ds.util.Copyright;
  * element		:= utf8-string - (null | "")
  * </pre>
  */
-@SuppressWarnings("unused") // TODO: remove this line
 @Copyright(year=2010, holders="Sascha Baumeister")
 public class ProxySorter implements MergeSorter<String> {
     static private final int BUFFER_SIZE = 0xF000;

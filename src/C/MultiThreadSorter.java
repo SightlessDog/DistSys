@@ -1,16 +1,16 @@
 package C;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.concurrent.*;
 
-import com.sun.source.tree.IfTree;
 import edu.sb.ds.sort.MergeSorter;
 import edu.sb.ds.sort.SingleThreadSorter;
 import edu.sb.ds.util.Copyright;
+import edu.sb.ds.util.Uninterruptibles;
 
 /**
  * Multi-threaded merge sorter implementation that distributes elements evenly over two child
@@ -28,6 +28,8 @@ public class MultiThreadSorter<E extends Comparable<E>> implements MergeSorter<E
     private E leftReadCache, rightReadCache;
     private boolean leftWrite;
     private State state;
+
+    static final ExecutorService THREAD_POOL = Executors.newFixedThreadPool(20);
 
 
     /**
@@ -84,19 +86,40 @@ public class MultiThreadSorter<E extends Comparable<E>> implements MergeSorter<E
     /**
      * {@inheritDoc}
      */
-    public void sort () throws IllegalStateException, IOException {
+    public void sort() throws IllegalStateException {
         if (this.getState() != State.SORT) throw new IllegalStateException(this.state.name());
+        final Callable<?> leftChildThread = () -> {
+            this.leftChild.sort();
+            this.leftReadCache = this.leftChild.read();
 
-        //TODO: Modify this implementation so that the two sort requests and associated
-        // reads are distributed into two separate threads, and use uninterruptible futures
-        // for the required thread synchronization. Keep in mind that the children's sort
-        // and read operations may throw exceptions, which must be precisely rethrown.
-        this.leftChild.sort();
-        this.leftReadCache = this.leftChild.read();
+            return "done";
+        };
+        final Callable<?> rightChildThread = () -> {
+            this.rightChild.sort();
+            this.rightReadCache = this.rightChild.read();
+            return "done";
+        };
 
-        this.rightChild.sort();
-        this.rightReadCache = this.rightChild.read();
+        final Future<?>[] futures = {
+            THREAD_POOL.submit(leftChildThread),
+            THREAD_POOL.submit(rightChildThread)
+        };
 
+        try {
+            for (final Future<?> future : futures) {
+                try {
+                    var result = Uninterruptibles.get(future);
+                } catch (final ExecutionException exception) {
+                    final Throwable cause = exception.getCause();	// manual precise rethrow for cause!
+                    if (cause instanceof Error) throw (Error) cause;
+                    if (cause instanceof RuntimeException) throw (RuntimeException) cause;
+                    throw new AssertionError();
+                }
+            }
+        } finally {
+            for (final Future<?> future : futures)
+                future.cancel(true);
+        }
         this.state = State.READ;
     }
 
@@ -137,22 +160,21 @@ public class MultiThreadSorter<E extends Comparable<E>> implements MergeSorter<E
      * within this system. If there is exactly one processor within this system, the result
      * will be the sole single-thread sorter instance created. Otherwise, the result will
      * be a multi-thread sorter instance.
+     *
      * @return the root sorter created
      */
     static public <T extends Comparable<T>> MergeSorter<T> newInstance () {
-        Queue<MergeSorter> sorterQ = new LinkedList<MergeSorter>();
+        Queue<MergeSorter> sorterQ = new LinkedList<>();
 
         for (int i=0; i<Runtime.getRuntime().availableProcessors(); i++) {
             sorterQ.add(SingleThreadSorter.newInstance());
         }
 
-        if (sorterQ.size()>1) {
-            final MergeSorter s1 = sorterQ.remove();
-            final MergeSorter s2 = sorterQ.remove();
-
-            sorterQ.add(new MultiThreadSorter<>(s1,s2));
+        while (sorterQ.size() > 1) {
+            final MergeSorter leftChild = sorterQ.remove();
+            final MergeSorter rightChild = sorterQ.remove();
+            sorterQ.add(new MultiThreadSorter(leftChild, rightChild));
         }
-
         // Create a queue containing as many single-thread sorter instances as there are
         // processors within this system - which will be at least one.
         // While there is more than one sorter within said queue, remove two of them,
