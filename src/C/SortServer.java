@@ -1,12 +1,12 @@
 package C;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Objects;
+
+import edu.sb.ds.sort.MergeSorter;
 import edu.sb.ds.util.Copyright;
 
 
@@ -89,9 +89,9 @@ public final class SortServer implements Runnable, AutoCloseable {
      */
     static private Runnable newConnectionHandler (final Socket connection) throws NullPointerException {
         if (connection == null) throw new NullPointerException();
-
+        System.out.println("connected");
         return () -> {
-            //TODO: Create a new sorter instance using MultiThreadSorterSkeleton.newInstance(), and a
+            // TODO: Create a new sorter instance using MultiThreadSorterSkeleton.newInstance(), and a
             // buffered reader and writer pair based on UTF-8 and a 60 KiB buffer size; note that this
             // size is chosen so that the TCP/IP headers and some multi-byte UTF-8 characters can be
             // added to a buffer content without frequently exceeding the maximum TCP/IPv4 packet sizes,
@@ -107,6 +107,21 @@ public final class SortServer implements Runnable, AutoCloseable {
             // you reach a null element, writing each of the non-null elements to the char sink, followed by
             // a line separator. Finally, write another line separator to the char sink, and flush the latter
             // forcing the response data to be sent completely  before reentering the wait for another CSR request.
+            // TODO not really done
+            MergeSorter sorter = MultiThreadSorter.newInstance();
+            try {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()), BUFFER_SIZE);
+                PrintWriter printer = new PrintWriter(connection.getOutputStream());
+                while (true) {
+                    while (reader.readLine() != null && !Objects.equals(reader.readLine(), "")) {
+                        sorter.write(reader.readLine());
+                    }
+                    sorter.write(null);
+                    sorter.sort();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         };
     }
 

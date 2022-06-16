@@ -8,8 +8,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.LinkedList;
+import java.util.Objects;
+import java.util.Queue;
 
 import edu.sb.ds.sort.MergeSorter;
+import edu.sb.ds.sort.SingleThreadSorter;
 import edu.sb.ds.util.Copyright;
 
 
@@ -74,9 +78,19 @@ public class ProxySorter implements MergeSorter<String> {
     public void write (final String element) throws IllegalStateException, IOException {
         if (this.state != State.WRITE) throw new IllegalStateException(this.state.name());
 
-        //TODO: If the given element is null, write newline characters to the char sink, flush
+        // TODO: If the given element is null, write newline characters to the char sink, flush
         // the latter, and set the state to SORT. Otherwise, write the given element to the
         // char sink, write newline characters to the latter, and do NOT flush it.
+        // TODO this should be done, but I am not sure please check
+
+        if (element == null) {
+            charSink.newLine();
+            charSink.flush();
+            this.state = State.SORT;
+        } else {
+            charSink.write(element);
+            charSink.newLine();
+        }
     }
 
 
@@ -96,9 +110,15 @@ public class ProxySorter implements MergeSorter<String> {
     public String read () throws IllegalStateException, IOException {
         if (this.state != State.READ) throw new IllegalStateException(this.state.name());
 
-        //TODO: Read the next line from the char source. Return said line if it is
+        // TODO: Read the next line from the char source. Return said line if it is
         // neither null nor empty. Otherwise, set the state to WRITE and return null.
-        return null;
+        // TODO this should be done, but I am not sure please check
+        if (charSource.readLine() != null && !Objects.equals(charSource.readLine(), "")) {
+            return charSource.readLine();
+        } else {
+            this.state = State.WRITE;
+            return null;
+        }
     }
 
 
@@ -122,14 +142,32 @@ public class ProxySorter implements MergeSorter<String> {
      * @throws IllegalArgumentException if there is no argument given
      * @throws IOException if there is an I/O related problem
      */
-    static public MergeSorter<String> newInstance (final InetSocketAddress... serviceAddresses) throws NullPointerException, IllegalArgumentException, IOException {
+    static public MergeSorter<String> newInstance(final InetSocketAddress... serviceAddresses) throws NullPointerException, IllegalArgumentException, IOException {
         if (serviceAddresses.length == 0) throw new IllegalArgumentException();
 
-        //TODO Create a queue containing one proxy sorter instance for each of the given service
+        // TODO Create a queue containing one proxy sorter instance for each of the given service
         // addresses - which will be at least one. While there is more than one sorter within said
         // queue, remove two of them, use these to create a new multi-thread sorter instance, and
         // add the latter to the queue - make sure this follows fist in first out semantics. This
         // way, the queue is guaranteed to contain exactly one element in the end, which shall be returned.
-        return null;
+        // TODO this should be done, but I am not sure please check
+        Queue<MergeSorter> sorterQ = new LinkedList<>();
+
+        for (int i=0; i<serviceAddresses.length; i++) {
+            sorterQ.add(new ProxySorter(new InetSocketAddress(serviceAddresses[i].getHostName(), serviceAddresses[i].getPort())));
+        }
+
+        while (sorterQ.size() > 1) {
+            final MergeSorter leftChild = sorterQ.remove();
+            final MergeSorter rightChild = sorterQ.remove();
+            sorterQ.add(new MultiThreadSorter(leftChild, rightChild));
+        }
+        // Create a queue containing as many single-thread sorter instances as there are
+        // processors within this system - which will be at least one.
+        // While there is more than one sorter within said queue, remove two of them,
+        // use these to create a new multi-thread sorter instance, and add the latter to the queue -
+        // make sure this follows first in first out semantics.
+        // This way, the queue is guaranteed to contain exactly one element in the end, which shall be returned.
+        return sorterQ.remove();
     }
 }
